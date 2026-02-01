@@ -3,6 +3,7 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 import streamlit as st
 from babel.numbers import format_currency
+import os
 
 sns.set(style='dark')
 
@@ -49,7 +50,9 @@ def create_rfm_df(df):
     return rfm_df
 
 # Load Data
-all_df = pd.read_csv("main_data.csv")
+script_dir = os.path.dirname(os.path.abspath(__file__))
+file_path = os.path.join(script_dir, 'main_data.csv')
+all_df = pd.read_csv(file_path)
 
 # Pastikan kolom tanggal bertipe datetime
 datetime_columns = ["order_purchase_timestamp", "order_delivered_customer_date"]
