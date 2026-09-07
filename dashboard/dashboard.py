@@ -35,13 +35,14 @@ def create_sum_order_items_df(df):
 
 def create_rfm_df(df):
     rfm_df = df.groupby(by="customer_unique_id", as_index=False).agg({
-        "order_purchase_timestamp": "max", # mengambil tanggal order terakhir
+        # mengambil tanggal order terakhir
+        "order_purchase_timestamp": "max",
         "order_id": "nunique",
         "price": "sum"
     })
     rfm_df.columns = ["customer_unique_id", "max_order_timestamp", "frequency", "monetary"]
     
-    # menghitung kapan terakhir pelanggan melakukan transaksi (hari)
+    # menghitung kapan terakhir pelanggan melakukan transaksi
     rfm_df["max_order_timestamp"] = rfm_df["max_order_timestamp"].dt.date
     recent_date = df["order_purchase_timestamp"].dt.date.max()
     rfm_df["recency"] = rfm_df["max_order_timestamp"].apply(lambda x: (recent_date - x).days)
@@ -49,27 +50,26 @@ def create_rfm_df(df):
     
     return rfm_df
 
-# Load Data
+# load data
 script_dir = os.path.dirname(os.path.abspath(__file__))
 file_path = os.path.join(script_dir, 'main_data.csv')
 all_df = pd.read_csv(file_path)
 
-# Pastikan kolom tanggal bertipe datetime
+# mengubah kolom tanggal bertipe datetime
 datetime_columns = ["order_purchase_timestamp", "order_delivered_customer_date"]
 for column in datetime_columns:
     all_df[column] = pd.to_datetime(all_df[column])
 
-# Sort data berdasarkan tanggal
+# data di sort berdasarkan tanggal
 all_df.sort_values(by="order_purchase_timestamp", inplace=True)
 all_df.reset_index(inplace=True)
 
-# Sidebar untuk filter tanggal
-
+# sidebar untuk filter tanggal
 min_date = all_df["order_purchase_timestamp"].min()
 max_date = all_df["order_purchase_timestamp"].max()
 
 with st.sidebar:
-    # Mengambil start_date & end_date dari date_input
+    # mengambil start_date & end_date dari date_input
     start_date, end_date = st.date_input(
         label='Rentang Waktu',
         min_value=min_date,
@@ -77,17 +77,16 @@ with st.sidebar:
         value=[min_date, max_date]
     )
 
-# Filter data utama berdasarkan rentang tanggal yang dipilih
+# filter data utama berdasarkan rentang tanggal yang dipilih
 main_df = all_df[(all_df["order_purchase_timestamp"] >= str(start_date)) & 
                 (all_df["order_purchase_timestamp"] <= str(end_date))]
 
-# Menyiapkan DataFrame yang sudah difilter untuk visualisasi
+# data utama yang sudah difilter untuk visualisasi
 daily_orders_df = create_daily_orders_df(main_df)
 sum_order_items_df = create_sum_order_items_df(main_df)
 rfm_df = create_rfm_df(main_df)
 
-# Halaman Utama Dashboard
-
+# halaman utama dashboard
 st.header('E-Commerce Dashboard')
 st.subheader('Proyek Analisis Data - Matthew Clark')
 
@@ -113,14 +112,14 @@ ax.tick_params(axis='y', labelsize=20)
 ax.tick_params(axis='x', labelsize=15)
 st.pyplot(fig)
 
-# Product Performance
+# produk terlaris vs pendapatan terbesar
 st.subheader("Produk Terlaris vs Pendapatan Terbesar")
 
 fig, ax = plt.subplots(nrows=1, ncols=2, figsize=(35, 15))
 
 colors = ["#90CAF9", "#D3D3D3", "#D3D3D3", "#D3D3D3", "#D3D3D3"]
 
-# By Quantity
+# by quantity
 sns.barplot(x="quantity_sold", y="product_category_name_english", data=sum_order_items_df.head(5), palette=colors, ax=ax[0])
 ax[0].set_ylabel(None)
 ax[0].set_xlabel("Produk Terjual", fontsize=30)
@@ -128,7 +127,7 @@ ax[0].set_title("Produk Terlaris", loc="center", fontsize=50)
 ax[0].tick_params(axis='y', labelsize=35)
 ax[0].tick_params(axis='x', labelsize=30)
 
-# By Revenue
+# by revenue
 sns.barplot(x="total_revenue", y="product_category_name_english", data=sum_order_items_df.sort_values(by="total_revenue", ascending=False).head(5), palette=colors, ax=ax[1])
 ax[1].set_ylabel(None)
 ax[1].set_xlabel("Total Pendapatan", fontsize=30)
@@ -141,7 +140,7 @@ ax[1].tick_params(axis='x', labelsize=30)
 
 st.pyplot(fig)
 
-# RFM Analysis
+# rfm analysis
 st.subheader("Pelanggan Terbaik Berdasarkan RFM Analysis")
 
 col1, col2, col3 = st.columns(3)
@@ -161,7 +160,7 @@ with col3:
 fig, ax = plt.subplots(nrows=1, ncols=3, figsize=(35, 15))
 colors = ["#90CAF9", "#90CAF9", "#90CAF9", "#90CAF9", "#90CAF9"]
 
-# Recency
+# recency
 sns.barplot(y="recency", x="customer_unique_id", data=rfm_df.sort_values(by="recency", ascending=True).head(5), palette=colors, ax=ax[0])
 ax[0].set_ylabel(None)
 ax[0].set_xlabel("Customer ID", fontsize=30)
@@ -170,8 +169,8 @@ ax[0].tick_params(axis='y', labelsize=30)
 ax[0].tick_params(axis='x', labelsize=35)
 ax[0].set_xticklabels(ax[0].get_xticklabels(), rotation=45, ha='right')
 
-# Frequency
-sns.barplot(y="frequency", x="customer_unique_id", data=rfm_df.sort_values(by="frequency", ascending=False).head(5), palette=colors, ax=ax[1])
+# frequency
+sns.barplot(y="frequency", x="customer_uniapakah que_id", data=rfm_df.sort_values(by="frequency", ascending=False).head(5), palette=colors, ax=ax[1])
 ax[1].set_ylabel(None)
 ax[1].set_xlabel("Customer ID", fontsize=30)
 ax[1].set_title("Frequency", loc="center", fontsize=50)
@@ -179,7 +178,7 @@ ax[1].tick_params(axis='y', labelsize=30)
 ax[1].tick_params(axis='x', labelsize=35)
 ax[1].set_xticklabels(ax[1].get_xticklabels(), rotation=45, ha='right')
 
-# Monetary
+# monetary
 sns.barplot(y="monetary", x="customer_unique_id", data=rfm_df.sort_values(by="monetary", ascending=False).head(5), palette=colors, ax=ax[2])
 ax[2].set_ylabel(None)
 ax[2].set_xlabel("Customer ID", fontsize=30)
